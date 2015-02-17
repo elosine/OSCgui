@@ -170,6 +170,16 @@ class PushMeOSCset {
     _msgoffadr, dclr, _msgonargs, _msgoffargs) );
   }
 
+  void addcrv(String id) {
+    for (int i=cset.size ()-1; i>=0; i--) {
+      PushMeOSC inst = cset.get(i);
+      if(inst.id.equals(id)){
+  beziers.mk(inst.id, "amp", "black", inst.l+2, inst.b-2, inst.l, inst.t+(inst.h/2), inst.r, 
+  inst.t+(inst.h/2), inst.r, inst.t );
+      }
+    }
+  }
+
   void drw() {
     for (int i=cset.size ()-1; i>=0; i--) {
       PushMeOSC inst = cset.get(i);

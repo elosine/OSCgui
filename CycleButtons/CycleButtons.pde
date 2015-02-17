@@ -9,19 +9,20 @@ String path;
 File file;
 
 PFont monaco13;
+int fr = 60;
 
 
 void setup() {
   size(500, 500);
+  frameRate(60);
   osc = new OscP5(this, myport);
   sc = new NetAddress("127.0.0.1", 57120);
   monaco13 = loadFont("Monaco-13.vlw");
   textFont(monaco13);
 
+  //Grab persistant data from file
   path = sketchPath("guidata.txt");
   file = new File(path);
-  
-
 
   if (file.exists()) {
     String[] d1 = loadStrings("guidata.txt");
@@ -35,15 +36,25 @@ void setup() {
       }
     }
   }
+
+ // beziers.mk("s1", "amp", "nicegreen", 30, 400, 30, 300, 300, 30, 300, 80 );
+pmos.addcrv("Use the");
+
+  //end draw
 }
 
 void draw() {
   background(0); 
-  pmos.drw();
+  pmos.drw(); 
+  csrs.drw();
+
+  beziers.drw();
 }
+ 
 
 void mouseDragged() {
   pmos.msdrg();
+  beziers.msdrg();
 }
 void mousePressed() {
   pmos.msprs();
@@ -54,5 +65,6 @@ void mouseReleased() {
 
 void keyPressed() {
   pmos.keyprs();
+  beziers.keyprs();
 }
 

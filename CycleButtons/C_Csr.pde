@@ -1,19 +1,24 @@
+/// Initialize empty csr set ///
+CsrSet csrs = new CsrSet();
+
 class Csr {
   // CONSTRUCTOR VARIALBES //
   int ix, wt;
-  float x1, x2, y1, y2, dur;
+  float x1, x2, y1, y2, dur1cyc;
   String cl;
-  float spdpxperfr;
 
   // CLASS VARIABLES //
+  float w;
+  float spdpxperfr;
   float x;
   float currtime = 0.0;
   int dir = 1;
   boolean go = false;
+  boolean drwcsr = false;
 
   // CONSTRUCTORS //
   //Constructor 1 
-  Csr(int aix, float ax1, float ax2, float ay1, float ay2, String acl, int awt, float aspdpxperfr) {
+  Csr(int aix, float ax1, float ax2, float ay1, float ay2, String acl, int awt, float adur1cyc) {
     ix = aix;
     x1 = ax1;
     x2 = ax2;
@@ -21,22 +26,26 @@ class Csr {
     y2 = ay2;
     cl = acl;
     wt = awt;
-    spdpxperfr = aspdpxperfr;
-    
+    dur1cyc = adur1cyc;
+
+    w = x2-x1;
+    spdpxperfr =  w/(dur1cyc * fr) ; //fr is a global variable - frameRate
     x = x1;
   } //end constructor 1
 
-  //  DRAW METHOD //
+    //  DRAW METHOD //
   void drw() {
-    
+
     /// Boundary Conditions ///
     if (x>x2) x=x1;
     if (x<x1) x=x2;
-  
+
     /// Draw Cursor ///
-    strokeWeight(wt); 
-    stroke(clr.get(cl));
-    line(x, y1, x, y2);   
+    if (drwcsr) {
+      strokeWeight(wt); 
+      stroke(clr.get(cl));
+      line(x, y1, x, y2);
+    }  
 
     /// Animate ///
     if (go) x = x+(spdpxperfr*dir);
@@ -49,35 +58,43 @@ class CsrSet {
   ArrayList<Csr> clst = new ArrayList<Csr>();
 
   // Make Instance Method //
-  void mkins(int ix, int stave, String cl, float spd) {
-    //println(cl);
-    Win w1 = wins.clst.get(stave);
-    clst.add(new Csr(ix, stave, cl, 3, spd*pxperframe));
+  void mk(int ix, float ax1, float ax2, float ay1, float ay2, String cl, int awt, float adur1cyc) {
+    clst.add(new Csr(ix, ax1, ax2, ay1, ay2, cl, awt, adur1cyc));
   } //end mk method
 
   // Draw Set Method //
-  void drst() {
-    for (int i=clst.size()-1; i>=0; i--) {
+  void drw() {
+    for (int i=clst.size ()-1; i>=0; i--) {
       Csr inst = clst.get(i);
       inst.drw();
     }
   } //end dr method
 
+  // Rmv Method //
+  void rmv(int ix) {
+    for (int i=clst.size ()-1; i>=0; i--) {
+      Csr inst = clst.get(i);
+      if (inst.ix == ix) {
+        clst.remove(i);
+      }
+    }
+  } //end dr method
+
   // Cursor Go //
-  void play(int ix, int dir, float spd) {
-    for (int i=clst.size()-1; i>=0; i--) {
+  void play(int ix, int dir, float dur1cyc) {
+    for (int i=clst.size ()-1; i>=0; i--) {
       Csr inst = clst.get(i);
       if (inst.ix == ix) {
         inst.go = true;
         inst.dir = dir;
-        inst.spdpxperfr = spd*pxperframe;
+        inst.spdpxperfr =  inst.w/(dur1cyc * fr) ; //fr is a global variable - frameRate
       }
     }
   } //end play method
 
   // Cursor Pause //
   void pause(int ix) {
-    for (int i=clst.size()-1; i>=0; i--) {
+    for (int i=clst.size ()-1; i>=0; i--) {
       Csr inst = clst.get(i);
       if (inst.ix == ix) {
         inst.go = false;

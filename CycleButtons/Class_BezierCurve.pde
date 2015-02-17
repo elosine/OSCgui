@@ -1,8 +1,9 @@
-//USE CURVE STROKE WEIGHT TO CONTROL ANOTHER FACTOR USUALLY AMPLITUDE
-
+//USE CURVE STROKE WEIGHT TO CONTROL ANOTHER FACTOR USUALLY AMPLITUDE?
+BezierSet beziers = new BezierSet();
 class BezierCurve {
   // Constructor Variables //
-  int ix;
+  String id;
+  String label;
   String clrname;
   color crvclr;
   int clrnum;
@@ -13,9 +14,11 @@ class BezierCurve {
   int crvStrkWt = 2;
   float l, t, r, bm;
   color bbclr;
-  boolean active = false;
+  int active = 0;
   int aptsz = 32;
   int ctptsz = 24;
+  boolean constrainit = true;
+  float []constraints = new float[4];
 
   //// CURVE FOLLOWING VARIABLES ////
   float SMALL = 0.0000000001;
@@ -28,11 +31,12 @@ class BezierCurve {
   boolean on = false;
 
   // Constructor //
-  BezierCurve(int aix, String argclrname, PVector A, PVector B, PVector C, PVector D) {
+  BezierCurve(String aid, String alabel, String argclrname, PVector A, PVector B, PVector C, PVector D) {
     clrname = argclrname;
-    ix = aix;
+    id = aid;
+    label = alabel;
     crvclr = clr.get(clrname);
-   
+
     x[0] = A.x;
     x[1] = B.x;
     x[2] = C.x;
@@ -41,9 +45,83 @@ class BezierCurve {
     y[1] = B.y;
     y[2] = C.y;
     y[3] = D.y;
+
+    // Update Curve Bounding Box //
+    if (x[0]<x[3]) {
+      l = x[0];
+      r = x[3];
+    } else {
+      l = x[3];
+      r = x[0];
+    } 
+    if (y[0]<y[3]) {
+      t = y[0];
+      bm = y[3];
+    } else {
+      t = y[3];
+      bm = y[0];
+    }
+
+    constraints[0] = l; 
+    constraints[1] = t; 
+    constraints[2] = r; 
+    constraints[3] = bm;
   } //End Constructor
 
   void drw() {
+
+    // Draw blue bounding box when moused over //
+    // And if clicked make curve active //
+    if (active==1) {
+
+      // Update Curve Bounding Box //
+      if (x[0]<x[3]) {
+        l = x[0];
+        r = x[3];
+      } else {
+        l = x[3];
+        r = x[0];
+      } 
+      if (y[0]<y[3]) {
+        t = y[0];
+        bm = y[3];
+      } else {
+        t = y[3];
+        bm = y[0];
+      }
+
+      if (!constrainit) {
+        stroke(clr.getAlpha("dodgerblue", 80));
+        rectMode(CORNER);
+        noFill();
+        rect(l, t, r-l, bm-t);
+      }
+
+     
+      ///Anchor 1
+      ellipseMode(CENTER);
+      fill(clr.getAlpha("dodgerblue", 80));
+      noStroke();
+      ellipse(x[0], y[0], aptsz, aptsz);
+      ///Anchor 2
+      ellipse(x[3], y[3], aptsz, aptsz);
+      ///Control 1
+      rectMode(CENTER);
+      fill(clr.getAlpha("goldenrod", 150));
+      rect(x[1], y[1], ctptsz, ctptsz);
+      ///Control 2
+      rect(x[2], y[2], ctptsz, ctptsz);
+      ///Connecting lines 
+      strokeWeight(1);
+      stroke(clr.getAlpha("grey", 100));
+      line(x[0], y[0], x[1], y[1]);
+      line(x[3], y[3], x[2], y[2]);
+      ////Index Number Displayed
+      //  textSize(24);
+      fill(clr.get("orange"));
+      text(label, l, t);
+    }
+
     // Draw Curve //
     strokeWeight(crvStrkWt);
     stroke(crvclr);
@@ -51,6 +129,66 @@ class BezierCurve {
     bezier(x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3]);
   } //End drw
 
+  void keyprs() {
+    if (key=='c') active = (active+1)%2;
+  }
+
+  void msdrg() {  
+    // If Active, enable moving
+    if (active==1) {
+      //If mouse is over the bounding box but not over any of the ctrl/anchor points
+      if (!mouseOver(x[0]-(aptsz/2), y[0]-(aptsz/2), x[0]+(aptsz/2), y[0]+(aptsz/2)) &&
+        !mouseOver(x[3]-(aptsz/2), y[3]-(aptsz/2), x[3]+(aptsz/2), y[3]+(aptsz/2)) &&
+        !mouseOver(x[1]-(ctptsz/2), y[1]-(ctptsz/2), x[1]+(ctptsz/2), y[1]+(ctptsz/2)) &&
+        !mouseOver(x[2]-(ctptsz/2), y[2]-(ctptsz/2), x[2]+(ctptsz/2), y[2]+(ctptsz/2)) &&
+        mouseOver(l, t, r, bm)) {
+        if (!constrainit) {
+          for (int i=0; i<4; i++) {
+            x[i] = x[i]+mouseX-pmouseX;
+            y[i] = y[i]+mouseY-pmouseY;
+          }
+        }
+      }
+      /// Move Anchor 1 if not over control 1
+      if (mouseOver(x[0]-(aptsz/2), y[0]-(aptsz/2), x[0]+(aptsz/2), y[0]+(aptsz/2)) &&
+        !mouseOver(x[1]-(ctptsz/2), y[1]-(ctptsz/2), x[1]+(ctptsz/2), y[1]+(ctptsz/2))) {
+        x[0] = x[0]+mouseX-pmouseX;
+        y[0] = y[0]+mouseY-pmouseY;
+        x[1] = x[1]+mouseX-pmouseX;
+        y[1] = y[1]+mouseY-pmouseY;
+        if (constrainit) {
+          x[0] = constraints[0];
+          y[0] = constrain(y[0], constraints[1], constraints[3]);
+       //   x[1] = constraints[0];
+       //   y[1] = constrain(y[1], constraints[1], constraints[3]);
+        }
+      }
+      /// Move Anchor 2 if not over control 2
+      if (mouseOver(x[3]-(aptsz/2), y[3]-(aptsz/2), x[3]+(aptsz/2), y[3]+(aptsz/2)) &&
+        !mouseOver(x[2]-(ctptsz/2), y[2]-(ctptsz/2), x[2]+(ctptsz/2), y[2]+(ctptsz/2))) {
+        x[3] = x[3]+mouseX-pmouseX;
+        y[3] = y[3]+mouseY-pmouseY;
+        x[2] = x[2]+mouseX-pmouseX;
+        y[2] = y[2]+mouseY-pmouseY;
+        if (constrainit) {
+          x[3] = constraints[2];
+          y[3] = constrain(y[3], constraints[1], constraints[3]);
+       //   x[2] = constraints[2];
+       //   y[2] = constrain(y[2], constraints[1], constraints[3]);
+        }
+      }
+      /// Move Ctrl 1
+      if (mouseOver(x[1]-(ctptsz/2), y[1]-(ctptsz/2), x[1]+(ctptsz/2), y[1]+(ctptsz/2))) {
+        x[1] = x[1]+mouseX-pmouseX;
+        y[1] = y[1]+mouseY-pmouseY;
+      }
+      /// Move Ctrl 2
+      if (mouseOver(x[2]-(ctptsz/2), y[2]-(ctptsz/2), x[2]+(ctptsz/2), y[2]+(ctptsz/2))) {
+        x[2] = x[2]+mouseX-pmouseX;
+        y[2] = y[2]+mouseY-pmouseY;
+      }
+    }
+  } //End msdrg method
 
   // ypos Method //
   float ypos(float xnow, int mode) {
@@ -219,18 +357,17 @@ class BezierSet {
   ArrayList<BezierCurve> clst = new ArrayList<BezierCurve>();
 
   // Make Instance Method //
-  void mk(int ix, String clr, int anchorpt1x, int anchorpt1y, int ctlpt1x, int ctlpt1y, int ctlpt2x, int ctlpt2y, int anchorpt2x, int anchorpt2y) {
-    
-    clst.add( new BezierCurve( ix, clr,
+  void mk(String id, String label, String clr, int anchorpt1x, int anchorpt1y, int ctlpt1x, int ctlpt1y, int ctlpt2x, int ctlpt2y, int anchorpt2x, int anchorpt2y) {
+
+    clst.add( new BezierCurve( id, label, clr, 
     new PVector(anchorpt1x, anchorpt1y), 
     new PVector(ctlpt1x, ctlpt1y), 
     new PVector(ctlpt2x, ctlpt2y), 
     new PVector(anchorpt2x, anchorpt2y) ) );
-    
   } //end mk method
 
   // Draw Set Method //
-  void drst() {
+  void drw() {
     for (int i=clst.size ()-1; i>=0; i--) {
       BezierCurve inst = clst.get(i);
       inst.drw();
@@ -266,6 +403,17 @@ class BezierSet {
       }
     }
   } //end msdrg method // Draw Set Method //
- 
+  void msdrg() {
+    for (int i=clst.size ()-1; i>=0; i--) {
+      BezierCurve inst = clst.get(i);
+      inst.msdrg();
+    }
+  } //end dr method
+  void keyprs() {
+    for (int i=clst.size ()-1; i>=0; i--) {
+      BezierCurve inst = clst.get(i);
+      inst.keyprs();
+    }
+  } //end dr method
 } //end class set class
 
