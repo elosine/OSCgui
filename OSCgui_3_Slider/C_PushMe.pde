@@ -129,6 +129,7 @@ class PushMeSet {
     for (PushMe inst : cset) {
       if ( mo(inst.l, inst.r, inst.t, inst.b) ) { //if mouse is over this button
         for (PushMe inst2 : cset) inst2.hasFocus = false; //set all to no focus
+        for (Slider inst3 : sliderz.cset) inst3.hasFocus = false; //set all to no focus
         inst.hasFocus = true; //set this instance to focus true
         break;
       }//end  if( mo(inst.l, inst.r, inst.t, inst.b) )

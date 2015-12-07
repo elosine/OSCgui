@@ -1,5 +1,4 @@
 
-//delete
 
 
 //sliders

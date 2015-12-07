@@ -1,8 +1,4 @@
 
-//delete
-
-
-//sliders
 
 //waveform display//samples
 
