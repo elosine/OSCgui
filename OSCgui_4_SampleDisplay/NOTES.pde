@@ -1,5 +1,8 @@
+/*
+display sample name
+play/pause button
+set range
 
+save gui
 
-//waveform display//samples
-
-//save gui
+*/

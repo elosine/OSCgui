@@ -13,11 +13,17 @@ boolean mkbt_t = false;
 ////Sliders//////////////
 int slct = 0;
 boolean mksl = false;
+////Waveform Display//////////////
+int wfct = 0;
+boolean mkwf = false;
 //SETUP/////////////////////////////////////////////////////////////////
 void setup() {
-  size(1000, 800);
+  size(1050, 800);
   //OSC//////////////////////////////////////////
-  osc = new OscP5(this, 12321);
+  OscProperties properties = new OscProperties();
+  properties.setListeningPort(12321);
+  properties.setDatagramSize(5136); 
+  osc = new OscP5(this, properties);
   sc = new NetAddress("127.0.0.1", 57120);
   me = new NetAddress("127.0.0.1", 12321);
   //TEXT//////////////////////////////////////////
@@ -28,12 +34,19 @@ void setup() {
   osc.plug(pushmez, "rmv", "/rmvbt");
   osc.plug(sliderz, "mk", "/mksl");
   osc.plug(sliderz, "rmv", "/rmsl");
+  osc.plug(sampledisplayz, "mk", "/mkwf");
+  osc.plug(sampledisplayz, "rmv", "/rmvwf");
+  osc.plug(sampledisplayz, "ix", "/ix");
+  //Make a waveform display
+  osc.send("/mkwf", new Object[]{wfct, 25, 100}, me);
+  wfct++;
 }//end setup
 //DRAW/////////////////////////////////////////////////////////////////
 void draw() {
   background(0);
   pushmez.drw();
   sliderz.drw();
+  sampledisplayz.drw();
 }//end draw
 //KEY PRESSED////////////////////////////////////////////////////////////
 void keyPressed() {
@@ -48,6 +61,10 @@ void keyPressed() {
   // s to make a new slider
   if (key=='s') {
     mksl = true;
+  }
+  // w to make a new waveform display
+  if (key=='w') {
+    mkwf = true;
   }
   pushmez.keyprs();
   sliderz.keyprs();
@@ -66,9 +83,14 @@ void keyReleased() {
   if (key=='s') {
     mksl = false;
   }
+  // w to make a new waveform display
+  if (key=='w') {
+    mkwf = false;
+  }
 }//end keyPressed
 //MOUSE PRESSED////////////////////////////////////////////////////////////
 void mousePressed() {
+  osc.send("/getsampnames", new Object[]{}, sc);
   //Make a new momentary button when mouse pressed and 'b' key pressed
   if (mkbt_m) {
     osc.send("/mkbt", new Object[]{btct, mouseX, mouseY, 0}, me);
@@ -84,8 +106,14 @@ void mousePressed() {
     osc.send("/mksl", new Object[]{slct, mouseX, mouseY}, me);
     slct++;
   }
+  //Make a new waveform display when mouse pressed and 'w' key pressed
+  if (mkwf) {
+    osc.send("/mkwf", new Object[]{wfct, mouseX, mouseY}, me);
+    wfct++;
+  }
   pushmez.msprs();
   sliderz.msprs();
+  sampledisplayz.msprs();
 }//end mouse pressed
 //MOUSE RELEASED////////////////////////////////////////////////////////////
 void mouseReleased() {
@@ -100,6 +128,35 @@ void mouseMoved() {
 void mouseDragged() {
   sliderz.msdrg();
 }//end mouse pressed
+// OSCEVENT ///////////////////////////////////////////////////////////////
+void oscEvent(OscMessage msg) {
+  //Get sample names
+  if ( msg.checkAddrPattern("/sampnames") ) {
+    int numsamps = msg.get(0).intValue();
+    for (SampleDisplay inst : sampledisplayz.cset) {
+      if (inst.ix==0) {
+        inst.sampnames = new String[0];
+        for (int i=1; i<numsamps; i++) {
+          inst.sampnames = append(inst.sampnames, msg.get(i).stringValue());
+        }
+        break;
+      }
+    }
+  }
+  //Get waveform data and store in samparrays
+  if ( msg.checkAddrPattern("/wavfrm") ) {
+    int numpx = msg.get(0).intValue();
+    for (SampleDisplay inst : sampledisplayz.cset) {
+      if (inst.ix==0) {
+        inst.samparray = new float[0];
+        for (int i=1; i<numpx; i++) {
+          inst.samparray = append(inst.samparray, msg.get(i).floatValue());
+        }
+        break;
+      }
+    }
+  }// end if ( msg.checkAddrPattern("/wavfrm") )
+}//end osc event
 //IS MOUSE OVER? FUNCTION////////////////////////////////////////////////
 boolean mo( float l, float r, float t, float b ) {
   boolean on = false;

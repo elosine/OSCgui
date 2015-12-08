@@ -1,0 +1,8 @@
+(
+s.waitForBoot{
+	fork{
+~buf =
+
+	}
+}
+)
