@@ -41,9 +41,9 @@ s.waitForBoot{
 		samps.do{|it ix| bufdurs = bufdurs.add((it.numFrames/it.sampleRate).asFloat)}; //get buf durs
 		//Add Live Sampling Buffers & Update bufnames and bufdurs
 		numlivesamps.do{|ix|
-		samps = samps.add( Buffer.alloc(s, s.sampleRate*16.0) );
-		buffnames = bufnames.add("livesampling"++ix);
-		bufdurs = bufdurs.add(16.0);
+			samps = samps.add( Buffer.alloc(s, s.sampleRate*16.0) );
+			buffnames = bufnames.add("livesampling"++ix);
+			bufdurs = bufdurs.add(16.0);
 		};
 		//SYNTH DEFS
 		SynthDef(\indexer, {
@@ -89,7 +89,11 @@ s.waitForBoot{
 			var pl = msg[1].asInteger;
 			var lbl = msg[2].asString;
 			var mode = msg[3].asInteger;
-if( mode==1, { //mode=1, on
+			var buf;
+			if( mode==1, { //mode=1, on
+				//look up buffernumber by label
+				//start a buf record at node 7000+pl into buf
+				//playback
 
 				},
 				{ //mode=0, off
